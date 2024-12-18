@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" width="width=device-width, initial-scale=1.0">
+    <title>寻宝游戏</title>
+    <style>
+        body,
+        html {
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+            background-image: url('p1.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        #secretImage,
+        #key,
+        #map,
+        #shouwei,
+        #baozang {
+            display: none;
+            width: 0;
+            height: 0;
+            opacity: 0;
+            transition: transform 2s, width 2s, height 2s, opacity 2s;
+            transform: rotate(0deg);
+        }
+
+        button {
+            padding: 20px 40px;
+            font-size: 18px;
+            background-color: #62d288;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            outline: none;
+            position: relative;
+            text-shadow: 0 0 10px #f8f3f3, 0 0 20px #f8f3f3, 0 0 30px #f8f3f3, 0 0 40px #f8f3f3;
+        }
+
+        #output {
+            font-size: 20px;
+            /* Increased font size */
+            background-color: white;
+            /* Added white background */
+            padding: 10px;
+            /* Added padding */
+            border-radius: 5px;
+            /* Rounded corners */
+            margin-top: 10px;
+            /* Added margin */
+        }
+
+        @keyframes secret {
+            0% {
+                width: 0;
+                height: 0;
+                opacity: 0;
+                transform: rotate(0deg);
+            }
+
+            100% {
+                width: 200px;
+                height: 200px;
+                opacity: 1;
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes animateShadow {
+            0%,
+            100% {
+                box-shadow: 2px 2px 20px 10px #ff6384;
+            }
+
+            25% {
+                box-shadow: -2px 2px 20px 10px #ff6384;
+            }
+
+            50% {
+                box-shadow: -2px -2px 20px 10px #ff6384;
+            }
+
+            75% {
+                box-shadow: 2px -2px 20px 10px #ff6384;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <audio id="bgMusic" src="bgm.mp3" autoplay loop></audio>
+    <h1 style="text-shadow: 0 0 10px #f8f3f3, 0 0 20px #f8f3f3, 0 0 30px #f8f3f3, 0 0 40px #f8f3f3;">Find the Treasure</h1>
+    <div id="playerInfo">
+        <label for="playerNickname">请输入您的昵称：</label>
+        <input type="text" id="playerNickname" placeholder="昵称">
+        <button id="startGameBtn">开始游戏</button>
+    </div>
+    <img id="secretImage" src="p2.png" alt="Treasure Image" />
+    <img id="map" src="p5.png" alt="Treasure Image" />
+    <img id="shouwei" src="p8.png" alt="Treasure Image" />
+    <img id="baozang" src="p7.png" alt="Treasure Image" />
+    <img id="key" src="p3.png" alt="Treasure Image" />
+    <button id="findClueBtn" style="display:none;">寻找线索</button>
+    <button id="decodeBtn" style="display:none;">解码</button>
+    <div id="output"></div>
+    <script type="text/javascript">
+        let gameState = "initial"; // 初始状态，可根据实际情况设定初始值
+
+        class TreasureMap {
+            static async getInitialClue() {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        resolve("在古老的图书馆里找到了第一个线索...");
+                    }, 1000);
+                });
+            }
+
+            static async decodeAncientScript(clue) {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        if (!clue) {
+                            reject("没有线索可以解码!");
+                        }
+                        resolve("解码成功!宝藏在一座古老的神庙中...");
+                    }, 1500);
+                });
+            }
+
+            static async searchTemple(location) {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        const random = Math.random();
+                        if (random < 0.5) {
+                            reject("糟糕!遇到了神庙守卫!");
+                        }
+                        resolve("找到了一个神秘的箱子...");
+                    }, 2000);
+                });
+            }
+
+            static async openTreasureBox() {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        resolve("恭喜!你找到了传说中的宝藏!");
+                    }, 1000);
+                });
+            }
+        }
+
+        function generateGameId() {
+            let id = '';
+            const characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            for (let i = 0; i < 6; i++) {
+                id += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            return id;
+        }
+
+        async function findTreasureWithPromises() {
+            // 获取玩家输入的昵称
+            const playerNickname = document.getElementById('playerNickname').value;
+            // 生成游戏ID
+            const gameId = generateGameId();
+            // 使用 Web Storage API 存储昵称和 ID
+            localStorage.setItem('playerNickname', playerNickname);
+            localStorage.setItem('gameId', gameId);
+
+            // 隐藏昵称输入框所在的 div
+            document.getElementById('playerInfo').style.display = 'none';
+
+            // 清空之前的输出内容
+            document.getElementById('output').innerHTML = "";
+
+            // 显示初始信息
+            document.getElementById('output').innerHTML += "找到一个上锁的密码箱<br>";
+            document.getElementById('output').style.fontSize = '20px'; // Increased font size
+            document.getElementById('output').style.backgroundColor = 'white'; // Added white background
+            findsecret();
+            let clue = "";
+            try {
+                await TreasureMap.decodeAncientScript(clue);
+            } catch (error) {
+                document.getElementById('output').innerHTML += "提示: " + error + "<br>";
+                document.getElementById('findClueBtn').style.display = 'inline'; // 显示寻找线索按钮
+            }
+            document.getElementById('startGameBtn').style.display = 'none';
+            // 移除之前可能添加的事件监听器
+            document.getElementById('findClueBtn').removeEventListener('click', findClue);
+            document.getElementById('findClueBtn').addEventListener('click', findClue);
+        }
+
+        function findClue() {
+            document.getElementById('findClueBtn').style.display = 'none'; // 隐藏寻找线索按钮
+            document.getElementById('output').style.fontSize = '20px'; // Increased font size
+            document.getElementById('output').style.backgroundColor = 'white'; // Added white background
+            document.body.style.backgroundImage = "url('p4.png')";
+            findkey();
+            // 使用 TreasureMap.getInitialClue() 并处理结果
+            TreasureMap.getInitialClue().then((initialClue) => {
+                document.getElementById('output').innerHTML += initialClue + "<br>";
+                // 将找到的线索赋值给全局变量 clue
+                clue = initialClue;
+                // 更新游戏状态为已找到线索状态
+                gameState = "clueFound";
+                // 存储找到线索的信息及当前游戏状态到游戏历史
+                storeGameHistory("找到线索: " + initialClue, gameState);
+                // 显示解码按钮
+                document.getElementById('decodeBtn').style.display = 'inline';
+                // 添加点击事件监听器到 decodeBtn
+                document.getElementById('decodeBtn').addEventListener('click', decodeClue);
+            });
+        }
+
+        function decodeClue() {
+            // 隐藏解码按钮
+            document.getElementById('decodeBtn').style.display = 'none';
+            document.getElementById('output').style.fontSize = '20px'; // Increased font size
+            document.getElementById('output').style.backgroundColor = 'white'; // Added white background
+            document.getElementById('key').style.display = 'none';
+            document.getElementById('secretImage').style.display = 'none';
+            findmap();
+
+            // 使用全局变量 clue 来解码线索
+            TreasureMap.decodeAncientScript(clue).then((location) => {
+                document.getElementById('output').innerHTML += location + "<br>";
+                // 更新游戏状态为已解码状态
+                gameState = "decoded";
+                storeGameHistory("解码成功，宝藏位置线索: " + location, gameState);
+                return TreasureMap.searchTemple(location);
+            }).then((box) => {
+                document.getElementById('output').innerHTML += box + "<br>";
+                // 根据搜索神庙结果更新游戏状态
+                if (box === "找到了一个神秘的箱子...") {
+                    gameState = "boxFound";
+                } else {
+                    gameState = "guarded";
+                }
+                storeGameHistory("搜索神庙结果: " + box, gameState);
+                return TreasureMap.openTreasureBox();
+            }).then((treasure) => {
+                document.getElementById('output').innerHTML += treasure + "<br>";
+                gameState = "treasureFound";
+                storeGameHistory("找到宝藏: " + treasure, gameState);
+                document.getElementById('map').style.display = 'none';
+                findbaozang();
+            }).catch((error) => {
+                document.getElementById('output').innerHTML += "任务失败: " + error + "<br>";
+                gameState = "failed";
+                storeGameHistory("任务失败原因: " + error, gameState);
+                document.getElementById('map').style.display = 'none';
+                findshouwei();
+            });
+        }
+
+        function findsecret() {
+            const treasureImage = document.getElementById('secretImage');
+            treasureImage.style.display = 'block';
+            treasureImage.style.animation = 'secret 2s forwards';
+        }
+
+        function findkey() {
+            const key = document.getElementById('key');
+            key.style.display = 'block';
+            key.style.animation = 'secret 2s forwards';
+        }
+
+        function findmap() {
+            const map = document.getElementById('map');
+            map.style.display = 'block';
+            map.style.animation = 'secret 2s forwards';
+            document.body.style.backgroundImage = "url('p6.png')"
+        }
+
+        function findshouwei() {
+            const shouweiImage = document.getElementById('shouwei');
+            // 设置元素为可见
+            shouweiImage.style.display = 'block';
+            // 设置元素宽高，以便动画能够正确显示
+            shouweiImage.style.width = '200px';
+            shouweiImage.style.height = '200px';
+            shouweiImage.style.opacity = '1';
+            // 应用 animateShadow 动画
+            shouweiImage.style.animation = 'animateShadow 1s infinite';
+        }
+
+        function findbaozang() {
+            const baozangImage = document.getElementById('baozang');
+            // 设置元素为可见
+            baozangImage.style.display = 'block';
+            // 设置元素宽高，以便动画能够正确显示
+            baozangImage.style.width = '200px';
+            baozangImage.style.height = '200px';
+            baozangImage.style.opacity = '1';
+            // 应用 animateShadow 动画
+            baozangImage.style.animation = 'animateShadow 1s infinite';
+        }
+
+        function storeGameHistory(info, state) {
+            let history = JSON.parse(localStorage.getItem('gameHistory')) || [];
+            history.push({ info: info, state: state });
+            localStorage.setItem('gameHistory', JSON.stringify(history));
+        }
+
+        function restoreGameState() {
+            const history = JSON.parse(localStorage.getItem('gameHistory'));
+            const storedNickname = localStorage.getItem('playerNickname');
+            const storedId = localStorage.getItem('gameId');
+            if (storedNickname) {
+                document.getElementById('output').innerHTML += "您的昵称：" + storedNickname + "<br>";
+            }
+            if (storedId) {
+                document.getElementById('output').innerHTML += "您的游戏ID：" + storedId + "<br>";
+            }
+            if (history && history.length > 0) {
+                const lastEntry = history[history.length - 1];
+                gameState = lastEntry.state;
+                if (gameState === "clueFound") {
+                    document.getElementById('findClueBtn').style.display = 'none';
+                    document.getElementById('decodeBtn').style.display = 'inline';
+                    document.getElementById('output').innerHTML += "上次游戏你找到了钥匙！<br>";
+                } else if (gameState === "decoded") {
+                    document.getElementById('decodeBtn').style.display = 'none';
+                    document.getElementById('output').innerHTML += "上次游戏你找到了地图！<br>";
+                } else if (gameState === "boxFound") {
+                    document.getElementById('output').innerHTML += "上次游戏你找到了箱子！<br>";
+                } else if (gameState === "guarded") {
+                    document.getElementById('output').innerHTML += "上次游戏你遇到了守卫！<br>";
+                } else if (gameState === "treasureFound") {
+                    document.getElementById('output').innerHTML += "上次游戏你已经找到了宝藏！<br>";
+                } else if (gameState === "failed") {
+                    document.getElementById('output').innerHTML += "上次游戏失败了，继续努力！<br>";
+                }
+            }
+        }
+
+        window.addEventListener('load', restoreGameState);
+        document.getElementById('startGameBtn').addEventListener('click', findTreasureWithPromises);
+    </script>
+</body>
+
+</html>
